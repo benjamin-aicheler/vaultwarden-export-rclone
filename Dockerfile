@@ -2,8 +2,8 @@
 FROM debian:bullseye-slim
 
 # Set the versions to install
-ENV BW_VERSION=2025.12.0
-ARG RCLONE_VERSION=1.72.1
+ENV BW_VERSION=2026.1.0
+ARG RCLONE_VERSION=1.73.1
 
 # 1. Install dependencies
 ENV DEBIAN_FRONTEND=noninteractive
