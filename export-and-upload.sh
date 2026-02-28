@@ -11,8 +11,14 @@ if [ -z "$BW_HOST" ] || [ -z "$BW_PASSWORD" ] || [ -z "$BW_CLIENTID" ] || [ -z "
   echo "Error: BW_HOST, BW_PASSWORD, BW_CLIENTID, or BW_CLIENTSECRET not set."
   exit 1
 fi
-if [ -z "$SMB_PATH" ]; then
-    echo "Error: SMB_PATH is not set."
+
+if [ -n "$SMB_PATH" ] && [ -z "$RCLONE_DEST" ]; then
+    echo "Warning: SMB_PATH is deprecated. Please use RCLONE_DEST instead (e.g., 'mysmb:vaultwarden' and configure the backend via RCLONE_CONFIG_* environment variables). Falling back to SMB_PATH for backward compatibility."
+    RCLONE_DEST=":smb:${SMB_PATH}"
+fi
+
+if [ -z "$RCLONE_DEST" ]; then
+    echo "Error: RCLONE_DEST is not set."
     exit 1
 fi
 
@@ -51,13 +57,12 @@ if [ ! -f "$FILENAME" ]; then
     exit 1
 fi
 
-# Upload to SMB
-echo "Uploading to SMB: ${SMB_PATH}..."
-# rclone uses RCLONE_CONFIG_SMB_* environment variables for auth
-rclone copy "$FILENAME" ":smb:${SMB_PATH}"
+# Upload
+echo "Uploading to ${RCLONE_DEST}..."
+rclone copy "$FILENAME" "${RCLONE_DEST}"
 
 # Retention Cleanup
 echo "Removing backups older than $CLEANUP_MIN_AGE..."
-rclone delete ":smb:${SMB_PATH}" --min-age "$CLEANUP_MIN_AGE" --include "vault-export-*.json"
+rclone delete "${RCLONE_DEST}" --min-age "$CLEANUP_MIN_AGE" --include "vault-export-*.json"
 
 echo "Process complete."
