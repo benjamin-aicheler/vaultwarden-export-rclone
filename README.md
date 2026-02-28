@@ -34,7 +34,7 @@ You will need the following information from your Vaultwarden / Bitwarden comple
 
 The container is designed to run once, execute the export and upload, and then exit. It is perfect for scheduling via cron or a scheduler like [Ofelia](https://github.com/mcuadros/ofelia).
 
-### 1. Example: Docker Compose with S3 (MinIO, AWS S3, etc.)
+### 1. Example: Docker Compose with SMB (Samba/Windows Share)
 
 ```yaml
 version: '3.8'
@@ -51,15 +51,14 @@ services:
       
       # --- Backup Settings ---
       - CLEANUP_MIN_AGE=30d
-      - RCLONE_DEST=s3remote:my-backup-bucket/vaultwarden
+      - RCLONE_DEST=mysmb:vaultwarden
       
-      # --- Rclone S3 Configuration ---
-      - RCLONE_CONFIG_S3REMOTE_TYPE=s3
-      - RCLONE_CONFIG_S3REMOTE_PROVIDER=AWS
-      - RCLONE_CONFIG_S3REMOTE_ACCESS_KEY_ID=your_access_key
-      - RCLONE_CONFIG_S3REMOTE_SECRET_ACCESS_KEY=your_secret_key
-      - RCLONE_CONFIG_S3REMOTE_REGION=us-east-1
-      - RCLONE_CONFIG_S3REMOTE_ENDPOINT=https://s3.example.com # If using MinIO or non-AWS S3
+      # --- Rclone SMB Configuration ---
+      - RCLONE_CONFIG_MYSMB_TYPE=smb
+      - RCLONE_CONFIG_MYSMB_HOST=192.168.1.10
+      - RCLONE_CONFIG_MYSMB_USER=your_smb_user
+      - RCLONE_CONFIG_MYSMB_PASS=your_obfuscated_smb_password # Important! See rclone docs on 'rclone obscure'
+      - RCLONE_CONFIG_MYSMB_DOMAIN=WORKGROUP # Optional
 ```
 
 ### 2. Example: Running as a Cron Job
