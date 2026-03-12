@@ -38,31 +38,58 @@ fi
 
 # Setup Export
 TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
-FILENAME="/tmp/vault-export-${TIMESTAMP}.json"
+JSON_FILENAME="/tmp/vault-export-${TIMESTAMP}.json"
+ARCHIVE_FILENAME="/tmp/vault-export-${TIMESTAMP}.7z"
+
+# Determine final upload filename and retention pattern based on ARCHIVE_PASSWORD
+if [ -n "$ARCHIVE_PASSWORD" ]; then
+    UPLOAD_FILENAME="$ARCHIVE_FILENAME"
+    RETENTION_PATTERN="vault-export-*.7z"
+else
+    UPLOAD_FILENAME="$JSON_FILENAME"
+    RETENTION_PATTERN="vault-export-*.json"
+fi
 
 # Register cleanup trap (runs on exit/error)
 cleanup() {
     echo "Cleaning up local files and session..."
-    rm -f "$FILENAME"
+    rm -f "$JSON_FILENAME"
+    rm -f "$ARCHIVE_FILENAME"
     bw logout || true
 }
 trap cleanup EXIT
 
 # Perform Export
-echo "Exporting vault to $FILENAME..."
-bw export --output "$FILENAME" --format json --session "$BW_SESSION"
+echo "Exporting vault to $JSON_FILENAME..."
+bw export --output "$JSON_FILENAME" --format json --session "$BW_SESSION"
 
-if [ ! -f "$FILENAME" ]; then
-    echo "Error: Export failed, file not created."
+if [ ! -f "$JSON_FILENAME" ]; then
+    echo "Error: Export failed, JSON file not created."
     exit 1
+fi
+
+# Optional Encryption
+if [ -n "$ARCHIVE_PASSWORD" ]; then
+    echo "ARCHIVE_PASSWORD is set. Encrypting JSON to $ARCHIVE_FILENAME..."
+    # -p: set password
+    # -mhe=on: encrypt archive header (hide file names inside archive)
+    7z a -p"$ARCHIVE_PASSWORD" -mhe=on -t7z "$ARCHIVE_FILENAME" "$JSON_FILENAME" >/dev/null
+    
+    if [ ! -f "$ARCHIVE_FILENAME" ]; then
+        echo "Error: Encryption failed, 7z archive not created."
+        exit 1
+    fi
+    
+    # Securely delete the unencrypted JSON now that it's archived
+    rm -f "$JSON_FILENAME"
 fi
 
 # Upload
 echo "Uploading to ${RCLONE_DEST}..."
-rclone copy "$FILENAME" "${RCLONE_DEST}"
+rclone copy "$UPLOAD_FILENAME" "${RCLONE_DEST}"
 
 # Retention Cleanup
 echo "Removing backups older than $CLEANUP_MIN_AGE..."
-rclone delete "${RCLONE_DEST}" --min-age "$CLEANUP_MIN_AGE" --include "vault-export-*.json"
+rclone delete "${RCLONE_DEST}" --min-age "$CLEANUP_MIN_AGE" --include "$RETENTION_PATTERN"
 
 echo "Process complete."

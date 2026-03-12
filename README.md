@@ -24,8 +24,10 @@ You will need the following information from your Vaultwarden / Bitwarden comple
 | `BW_CLIENTID` | Bitwarden API Client ID (`user.xxxxxxxx`) | | Yes |
 | `BW_CLIENTSECRET` | Bitwarden API Client Secret | | Yes |
 | `BW_PASSWORD` | Master password to unlock your vault | | Yes |
-| `RCLONE_DEST` | Destination for the backup (e.g., `myremote:backup/vaultwarden`) | | Yes |
-| `CLEANUP_MIN_AGE` | Retention period for old backups | `30d` | No |
+| `RCLONE_DEST` | Rclone destination string (e.g., `mysmb:vaultwarden`). Also configure any required `RCLONE_CONFIG_*` vars. | | Yes |
+| `RCLONE_CONFIG_*` | Any Rclone configuration parameters (e.g. `RCLONE_CONFIG_MYSMB_TYPE=smb`) | | No |
+| `CLEANUP_MIN_AGE` | Minimum age of backups to keep (default: `30d`). Evaluated based on rclone `--min-age`. | `30d` | No |
+| `ARCHIVE_PASSWORD`| If set, the exported JSON will be compressed and encrypted into a `.7z` archive using this password and AES-256 encryption. | | No |
 | `SMB_PATH` | *Deprecated.* Use `RCLONE_DEST` instead. | | No |
 
 *Note: You must also pass your `rclone` backend configuration via environment variables (e.g., `RCLONE_CONFIG_MYREMOTE_TYPE`, `RCLONE_CONFIG_MYREMOTE_PROVIDER`, etc.) based on your desired storage format, or mount an `rclone.conf` file.*
@@ -59,6 +61,38 @@ services:
       - RCLONE_CONFIG_MYSMB_USER=your_smb_user
       - RCLONE_CONFIG_MYSMB_PASS=your_obfuscated_smb_password # Important! See rclone docs on 'rclone obscure'
       - RCLONE_CONFIG_MYSMB_DOMAIN=WORKGROUP # Optional
+```
+
+#### Rclone Backend Configuration
+
+Use environment variables to configure Rclone backends dynamically without needing a configuration file.
+
+**Example for an SMB backend:**
+```bash
+-e RCLONE_CONFIG_MYSMB_TYPE=smb \
+-e RCLONE_CONFIG_MYSMB_HOST=192.168.1.100 \
+-e RCLONE_CONFIG_MYSMB_USER=myuser \
+-e RCLONE_CONFIG_MYSMB_PASS=mypassword \
+-e RCLONE_DEST=mysmb:backup_folder
+```
+
+### Encryption and Archiving
+
+If you wish to securely compress and password-protect your Vaultwarden export before uploading it, you can provide the `ARCHIVE_PASSWORD` environment variable.
+
+```bash
+docker run -d \
+   # ... other environment variables ...
+   -e ARCHIVE_PASSWORD="your-strong-archive-password" \
+   vaulwarden-export-rclone
+```
+
+When this variable is provided, the script uses `7zip` to create an AES-256 encrypted `.7z` archive containing the vault export instead of uploading plain `.json` files.
+
+**Restoring from an encrypted archive:**
+You can use standard unarchiving tools like `7z` to extract the JSON locally:
+```bash
+7z x -p"your-strong-archive-password" vault-export-YYYY-MM-DD_HHMMSS.7z
 ```
 
 ### 2. Example: Running as a Cron Job
