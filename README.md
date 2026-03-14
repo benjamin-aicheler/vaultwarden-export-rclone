@@ -109,7 +109,7 @@ Save your variables in a `.env` file (`/opt/vaultwarden-backup/.env`) and run:
 ## Security Considerations
 
 - The container requires your **Master Password** and **API credentials** in plaintext as environment variables in order to perform an automated export.
-- **WARNING: The exported JSON file is currently UNENCRYPTED.** Ensure your `rclone` destination is secure and access-controlled.
+- **Security Warning:** By default, the exported JSON file is **UNENCRYPTED**. We highly recommend setting the `ARCHIVE_PASSWORD` environment variable to encrypt your backup before it is uploaded. Regardless, ensure your `rclone` destination is secure.
 - Always ensure your `.env` files or `docker-compose.yml` configs are strictly secured (e.g., `chmod 600`) and owned by `root`/your admin user only.
 - Consider utilizing a dedicated read-only/backup account in Vaultwarden if practical.
 
