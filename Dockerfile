@@ -1,4 +1,4 @@
-FROM node:25-alpine
+FROM node:26-alpine
 
 # Copy the pre-compiled rclone binary directly from the official rclone image
 COPY --from=rclone/rclone:latest /usr/local/bin/rclone /usr/local/bin/rclone
@@ -6,7 +6,7 @@ COPY --from=rclone/rclone:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/cer
 
 # Install Bitwarden CLI and 7zip
 RUN apk add --no-cache 7zip && \
-    npm install -g @bitwarden/cli@2026.4.1 && \
+    npm install -g @bitwarden/cli@2026.4.2 && \
     npm cache clean --force
 
 # Setup execution script
