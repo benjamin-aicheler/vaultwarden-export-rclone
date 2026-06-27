@@ -6,7 +6,7 @@ COPY --from=rclone/rclone:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/cer
 
 # Install Bitwarden CLI and 7zip
 RUN apk add --no-cache 7zip && \
-    npm install -g @bitwarden/cli@2026.4.2 && \
+    npm install -g @bitwarden/cli@2026.6.0 && \
     npm cache clean --force
 
 # Setup execution script
