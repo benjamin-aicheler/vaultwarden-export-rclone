@@ -52,8 +52,9 @@ jobs:
       - name: Entrypoint refuses to run without configuration
         run: |
           set -uo pipefail
-          out=$(docker run --rm local/vaultwarden-export-rclone:test 2>&1)
-          rc=$?
+          # the run exits 1 on purpose, so the capture must not trip `set -e`
+          rc=0
+          out=$(docker run --rm local/vaultwarden-export-rclone:test 2>&1) || rc=$?
           echo "$out"
           if [ "$rc" -ne 1 ]; then
             echo "expected exit code 1 without configuration, got $rc"
