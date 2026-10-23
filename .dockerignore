@@ -1,0 +1,6 @@
+# Only Dockerfile and export-and-upload.sh are needed in the build context.
+.git
+.github
+tests
+*.md
+LICENSE

@@ -12,10 +12,22 @@ This Dockerized tool exports your Vaultwarden (Bitwarden) vault as JSON, optiona
 
 ## Requirements
 
-You will need the following information from your Vaultwarden / Bitwarden complete the setup:
+You will need the following information from your Vaultwarden / Bitwarden to complete the setup:
 1. Vaultwarden URL (`BW_HOST`)
 2. Bitwarden API Key (Client ID `BW_CLIENTID` & Client Secret `BW_CLIENTSECRET`) - found in Account Settings -> Security -> Keys.
 3. Master Password (`BW_PASSWORD`)
+
+### Image tags
+
+Images are published to Docker Hub (`benjaminaicheler/vaultwarden-export-rclone`) and to `ghcr.io/benjamin-aicheler/vaultwarden-export-rclone`, both as multi-arch images (`linux/amd64`, `linux/arm64`):
+
+| Tag | Meaning |
+|-----|---------|
+| `latest` | Last release. Only moved by a `v*` tag, so it never jumps between releases by itself. |
+| `dev` | Current `main` on every push. Built and smoke-tested, but not a release. |
+| `sha-<short>` | One specific commit, for pinning a deployment. |
+
+Use `latest` for scheduled backups and pin `sha-…` if you need the exact build to be reproducible.
 
 ## Environment Variables
 
@@ -50,8 +62,6 @@ The container is designed to run once, execute the export and upload, and then e
 ### 1. Example: Docker Compose with SMB (Samba/Windows Share)
 
 ```yaml
-version: '3.8'
-
 services:
   vaultwarden-backup:
     image: benjaminaicheler/vaultwarden-export-rclone:latest
@@ -134,6 +144,23 @@ Save your variables in a `.env` file (`/opt/vaultwarden-backup/.env`) and run:
 - Always ensure your `.env` files or `docker-compose.yml` configs are strictly secured (e.g., `chmod 600`) and owned by `root`/your admin user only.
 - The container runs as the unprivileged user `app` (uid/gid `10001`, `HOME=/home/app`). The Bitwarden CLI needs that home for its configuration; if you bind-mount a directory instead of using an rclone backend, it must be writable for uid `10001`.
 - Consider utilizing a dedicated read-only/backup account in Vaultwarden if practical.
+
+## Development
+
+The repository is small on purpose: one POSIX `sh` script, one `Dockerfile`, one workflow.
+
+- `export-and-upload.sh` — the whole job. Runs under BusyBox `ash` in the image, so keep it POSIX (no bashisms). `shellcheck -S style export-and-upload.sh` is expected to stay silent apart from the two known SC2155/SC2046 notes on the `bw unlock` line, whose status masking is deliberate (it is what makes the `if [ -z "$BW_SESSION" ]` check work).
+- `tests/harness.sh` — 15 scenarios against the script with shimmed `bw`/`7z`/`rclone` (`tests/shims`). Run it before touching the script:
+
+  ```bash
+  sh tests/harness.sh
+  ```
+
+  It needs `node` (the export is validated with it) and uses a real `rclone` when one is installed; without rclone the two retention cases report `skip`. The script's `/tmp` export files must be cleaned up after every case, which the harness asserts.
+- `.github/workflows/build.yml` — on every pull request: amd64 build, image smoke test (tooling, entrypoint) and the harness **inside the built image**. On `main` and on `v*` tags: multi-arch build pushed to Docker Hub and GHCR (`main` → `dev`, tag → version + `latest`).
+- Base images and the Bitwarden CLI are pinned (`node:26.12-alpine`, `rclone/rclone:1.75.2` as a build stage so Dependabot sees it, `@bitwarden/cli@2026.10.0`). Dependabot opens weekly Docker PRs; the CLI pin is a manual bump because there is no `package.json`.
+- `README.md` and `DOCKERHUB.md` share their intro, features, env table, "What a run does", image tags and security sections — change both, and keep the shared sections identical.
+- Commits and documentation are English. `AGENTS.md` holds the rules for automated contributors.
 
 ## License
 
