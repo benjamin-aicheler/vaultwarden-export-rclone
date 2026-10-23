@@ -100,12 +100,17 @@ rclone copy "$UPLOAD_FILENAME" "${RCLONE_DEST}"
 # out of the cleanup even if the remote reports an unusable modification time.
 # The trailing "- *" is required: with "+" rules in place rclone includes every
 # unmatched file, which would delete anything else living in the destination.
+# A failed cleanup must not turn a successful backup into a failed run: the
+# upload already happened, and a red cron job for an intact backup trains people
+# to ignore the alert. The warning keeps the failure visible in the log.
 echo "Removing backups older than $CLEANUP_MIN_AGE..."
-rclone delete "${RCLONE_DEST}" \
+if ! rclone delete "${RCLONE_DEST}" \
     --min-age "$CLEANUP_MIN_AGE" \
     --filter "- $(basename "$UPLOAD_FILENAME")" \
     --filter "+ vault-export-*.json" \
     --filter "+ vault-export-*.7z" \
-    --filter "- *"
+    --filter "- *"; then
+    echo "Warning: retention cleanup failed, old backups were NOT removed (see rclone output above)."
+fi
 
 echo "Process complete."
