@@ -22,6 +22,13 @@ if [ -z "$RCLONE_DEST" ]; then
     exit 1
 fi
 
+# Validate the retention window before logging in, so a typo cannot fail the run
+# after a backup has already been uploaded.
+if ! printf '%s' "$CLEANUP_MIN_AGE" | grep -Eq '^[0-9]+[smhdwMy]$'; then
+    echo "Error: CLEANUP_MIN_AGE must be a number followed by one unit, e.g. '30d', '12h' or '1w' (got '$CLEANUP_MIN_AGE')."
+    exit 1
+fi
+
 # Authentication
 bw config server "$BW_HOST"
 echo "Logging in to $BW_HOST..."
@@ -41,13 +48,11 @@ TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
 JSON_FILENAME="/tmp/vault-export-${TIMESTAMP}.json"
 ARCHIVE_FILENAME="/tmp/vault-export-${TIMESTAMP}.7z"
 
-# Determine final upload filename and retention pattern based on ARCHIVE_PASSWORD
+# Determine final upload filename based on ARCHIVE_PASSWORD
 if [ -n "$ARCHIVE_PASSWORD" ]; then
     UPLOAD_FILENAME="$ARCHIVE_FILENAME"
-    RETENTION_PATTERN="vault-export-*.7z"
 else
     UPLOAD_FILENAME="$JSON_FILENAME"
-    RETENTION_PATTERN="vault-export-*.json"
 fi
 
 # Register cleanup trap (runs on exit/error)
@@ -89,7 +94,18 @@ echo "Uploading to ${RCLONE_DEST}..."
 rclone copy "$UPLOAD_FILENAME" "${RCLONE_DEST}"
 
 # Retention Cleanup
+# Both formats are rotated regardless of the current mode, so switching
+# ARCHIVE_PASSWORD on or off cannot leave old plaintext exports behind.
+# Ordered --filter rules (first match wins) keep the backup uploaded in this run
+# out of the cleanup even if the remote reports an unusable modification time.
+# The trailing "- *" is required: with "+" rules in place rclone includes every
+# unmatched file, which would delete anything else living in the destination.
 echo "Removing backups older than $CLEANUP_MIN_AGE..."
-rclone delete "${RCLONE_DEST}" --min-age "$CLEANUP_MIN_AGE" --include "$RETENTION_PATTERN"
+rclone delete "${RCLONE_DEST}" \
+    --min-age "$CLEANUP_MIN_AGE" \
+    --filter "- $(basename "$UPLOAD_FILENAME")" \
+    --filter "+ vault-export-*.json" \
+    --filter "+ vault-export-*.7z" \
+    --filter "- *"
 
 echo "Process complete."
