@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Base images in the Dockerfile (node and the rclone build stage).
+  # The Bitwarden CLI is pinned inside a `npm install -g` line and therefore not
+  # visible to the npm ecosystem, which needs a package.json.
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+    groups:
+      base-images:
+        patterns:
+          - "*"
