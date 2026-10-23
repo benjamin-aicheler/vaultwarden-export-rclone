@@ -377,6 +377,18 @@ See Compose Example for including self-signed Certificates.
 
 This project was refactored and documented in partnership with **Ikaros**, an agentic coding assistant running on Hermes Agent by Nous Research. All architectural choices, code styles and features (such as the retention filter chain, the export validation and the non-root image) were developed with AI pair programming and reviewed before every merge.
 
+## License
+
+Copyright 2025–2026 Benjamin Aicheler
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+<https://www.apache.org/licenses/LICENSE-2.0>
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, **WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND**, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+Use at your own risk: verify that a restore works before you rely on the backups. The full license text is in `LICENSE`.
+
 ### Third-Party Licenses
 
 This Docker image is distributed as a bundled environment and contains third-party software subject to their respective open-source licenses, including copyleft licenses. When using or redistributing this image, you must comply with the terms of these licenses:

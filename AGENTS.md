@@ -75,7 +75,7 @@ shellcheck -S style export-and-upload.sh
 
 - `README.md` and `DOCKERHUB.md` mirror these sections: intro, *Features*, *Requirements*,
   *Image tags*, *Environment Variables*, *What a run does*, *Security Considerations*,
-  *AI Disclosure*. Patch **both**, and prove the shared sections identical:
+  *AI Disclosure*, *License*. Patch **both**, and prove the shared sections identical:
   `diff <(sed -n '/^## Features/,/^## /p' README.md) <(sed -n '/^## Features/,/^## /p' DOCKERHUB.md)`
 - Every documented command must actually run: extract the ```bash blocks, `sh -n` them, and execute
   the `docker run` blocks against a stub `docker` that prints its argv. A `#` comment inside a
