@@ -1,8 +1,12 @@
-FROM node:26-alpine
+# Pinned base images: the rclone stage exists so the image reference is a real
+# FROM line (Dependabot tracks those reliably, not `COPY --from=image:tag`).
+FROM rclone/rclone:1.75.2 AS rclone
 
-# Copy the pre-compiled rclone binary directly from the official rclone image
-COPY --from=rclone/rclone:latest /usr/local/bin/rclone /usr/local/bin/rclone
-COPY --from=rclone/rclone:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+FROM node:26.12-alpine
+
+# Copy the pre-compiled rclone binary and the CA bundle from the rclone image
+COPY --from=rclone /usr/local/bin/rclone /usr/local/bin/rclone
+COPY --from=rclone /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 # Install Bitwarden CLI and 7zip
 RUN apk add --no-cache 7zip && \
