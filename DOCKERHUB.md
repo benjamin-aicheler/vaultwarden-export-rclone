@@ -371,6 +371,10 @@ See Compose Example for including self-signed Certificates.
 - The container runs as the unprivileged user `app` (uid/gid `10001`, `HOME=/home/app`). The Bitwarden CLI needs that home for its configuration; if you bind-mount a directory instead of using an rclone backend, it must be writable for uid `10001`.
 - Consider utilizing a dedicated read-only/backup account in Vaultwarden if practical.
 
+## AI Disclosure
+
+This project was refactored and documented in partnership with **Ikaros**, an agentic coding assistant running on Hermes Agent by Nous Research. All architectural choices, code styles and features (such as the retention filter chain, the export validation and the non-root image) were developed with AI pair programming and reviewed before every merge.
+
 ### Third-Party Licenses
 
 This Docker image is distributed as a bundled environment and contains third-party software subject to their respective open-source licenses, including copyleft licenses. When using or redistributing this image, you must comply with the terms of these licenses:

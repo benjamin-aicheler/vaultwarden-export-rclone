@@ -74,12 +74,13 @@ shellcheck -S style export-and-upload.sh
 ## Documentation
 
 - `README.md` and `DOCKERHUB.md` mirror these sections: intro, *Features*, *Requirements*,
-  *Image tags*, *Environment Variables*, *What a run does*, *Security Considerations*. Patch
-  **both**, and prove the shared sections identical:
+  *Image tags*, *Environment Variables*, *What a run does*, *Security Considerations*,
+  *AI Disclosure*. Patch **both**, and prove the shared sections identical:
   `diff <(sed -n '/^## Features/,/^## /p' README.md) <(sed -n '/^## Features/,/^## /p' DOCKERHUB.md)`
 - Every documented command must actually run: extract the ```bash blocks, `sh -n` them, and execute
   the `docker run` blocks against a stub `docker` that prints its argv. A `#` comment inside a
   backslash continuation silently truncates the command.
+- The *AI Disclosure* must stay true: name the assistant you actually use, and update the section in the same PR if the wording stops matching reality.
 - Copying `DOCKERHUB.md` into the Docker Hub description is a manual step for the maintainer.
 - `.dockerignore` is not `.gitignore`: it only keeps files out of the build context.
 
