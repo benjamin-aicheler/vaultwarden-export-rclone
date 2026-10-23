@@ -110,6 +110,8 @@ Save your variables in a `.env` file (`/opt/vaultwarden-backup/.env`) and run:
 
 - The container requires your **Master Password** and **API credentials** in plaintext as environment variables in order to perform an automated export.
 - **Security Warning:** By default, the exported JSON file is **UNENCRYPTED**. We highly recommend setting the `ARCHIVE_PASSWORD` environment variable to encrypt your backup before it is uploaded. Regardless, ensure your `rclone` destination is secure.
+- `ARCHIVE_PASSWORD` is passed to `7z` as a command-line argument, so it is visible in `/proc/<pid>/cmdline` inside the container for as long as the archive is being written. 7-Zip provides no other way to supply a password, so this is documented rather than worked around: keep the container's process namespace private and run it on a host you trust.
+- The export is written to `/tmp` inside the container with mode `0600` (`umask 077`). Removing it after archiving is a normal `rm`, not a secure erase — blocks can survive in the container's copy-on-write layer.
 - Always ensure your `.env` files or `docker-compose.yml` configs are strictly secured (e.g., `chmod 600`) and owned by `root`/your admin user only.
 - Consider utilizing a dedicated read-only/backup account in Vaultwarden if practical.
 
