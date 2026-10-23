@@ -14,3 +14,18 @@ updates:
       base-images:
         patterns:
           - "*"
+
+  # Third-party actions used in .github/workflows/build.yml.
+  # Dependabot rewrites the `@vN` tag, so a new major release arrives as a PR
+  # that is built and smoke-tested before it is merged.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"

@@ -66,7 +66,7 @@ shellcheck -S style export-and-upload.sh
   `@bitwarden/cli@2026.10.0`.
 - rclone is consumed through a **`FROM … AS rclone` stage**, not `COPY --from=rclone/rclone:tag`:
   Dependabot only tracks `FROM` lines. Do not "simplify" it back.
-- Dependabot (`.github/dependabot.yml`) covers the `docker` ecosystem weekly, grouped. The CLI pin
+- Dependabot (`.github/dependabot.yml`) covers the `docker` and `github-actions` ecosystems weekly, grouped. The CLI pin
   sits inside a `npm install -g` line and is invisible to it — bump it by hand, and verify the
   flags the script uses against the new binary (`config server`, `login --apikey`,
   `unlock --passwordenv … --raw`, `export --output … --format json --session …`, `logout`).
@@ -80,6 +80,7 @@ shellcheck -S style export-and-upload.sh
 - Every documented command must actually run: extract the ```bash blocks, `sh -n` them, and execute
   the `docker run` blocks against a stub `docker` that prints its argv. A `#` comment inside a
   backslash continuation silently truncates the command.
+- Action bumps arrive as Dependabot PRs that rewrite the `@vN` tag. Read the action's release notes before merging a major bump, and check that the workflow still parses (`actionlint`).
 - The *AI Disclosure* must stay true: name the assistant you actually use, and update the section in the same PR if the wording stops matching reality.
 - Copying `DOCKERHUB.md` into the Docker Hub description is a manual step for the maintainer.
 - `.dockerignore` is not `.gitignore`: it only keeps files out of the build context.
