@@ -12,10 +12,22 @@ This Dockerized tool exports your Vaultwarden (Bitwarden) vault as JSON, optiona
 
 ## Requirements
 
-You will need the following information from your Vaultwarden / Bitwarden complete the setup:
+You will need the following information from your Vaultwarden / Bitwarden to complete the setup:
 1. Vaultwarden URL (`BW_HOST`)
 2. Bitwarden API Key (Client ID `BW_CLIENTID` & Client Secret `BW_CLIENTSECRET`) - found in Account Settings -> Security -> Keys.
 3. Master Password (`BW_PASSWORD`)
+
+### Image tags
+
+Images are published to Docker Hub (`benjaminaicheler/vaultwarden-export-rclone`) and to `ghcr.io/benjamin-aicheler/vaultwarden-export-rclone`, both as multi-arch images (`linux/amd64`, `linux/arm64`):
+
+| Tag | Meaning |
+|-----|---------|
+| `latest` | Last release. Only moved by a `v*` tag, so it never jumps between releases by itself. |
+| `dev` | Current `main` on every push. Built and smoke-tested, but not a release. |
+| `sha-<short>` | One specific commit, for pinning a deployment. |
+
+Use `latest` for scheduled backups and pin `sha-…` if you need the exact build to be reproducible.
 
 ## Environment Variables
 
