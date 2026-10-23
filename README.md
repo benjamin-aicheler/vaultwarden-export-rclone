@@ -23,8 +23,10 @@ Images are published to Docker Hub (`benjaminaicheler/vaultwarden-export-rclone`
 
 | Tag | Meaning |
 |-----|---------|
-| `latest` | Last release. Only moved by a `v*` tag, so it never jumps between releases by itself. |
+| `latest` | Last release, same image as the highest `v<X.Y.Z>`. Only moved by a `v*` tag, so it never jumps between releases by itself. |
 | `dev` | Current `main` on every push. Built and smoke-tested, but not a release. |
+| `v<X.Y.Z>` | One release, e.g. `v2.7.0`. Created from a `v*` git tag. |
+| `v<X.Y>` | The release line, moved on every patch release of that line. |
 | `sha-<short>` | One specific commit, for pinning a deployment. |
 
 Use `latest` for scheduled backups and pin `sha-…` if you need the exact build to be reproducible.
@@ -161,7 +163,7 @@ The repository is small on purpose: one POSIX `sh` script, one `Dockerfile`, one
   ```
 
   It needs `node` (the export is validated with it) and uses a real `rclone` when one is installed; without rclone the two retention cases report `skip`. The script's `/tmp` export files must be cleaned up after every case, which the harness asserts.
-- `.github/workflows/build.yml` — on every pull request: amd64 build, image smoke test (tooling, entrypoint) and the harness **inside the built image**. On `main` and on `v*` tags: multi-arch build pushed to Docker Hub and GHCR (`main` → `dev`, tag → version + `latest`).
+- `.github/workflows/build.yml` — on every pull request: amd64 build, image smoke test (tooling, entrypoint) and the harness **inside the built image**. On `main` and on `v*` tags: multi-arch build pushed to Docker Hub and GHCR (`main` → `dev`, tag → `v<X.Y.Z>`, `v<X.Y>`, `latest`).
 - Base images and the Bitwarden CLI are pinned (`node:26.12-alpine`, `rclone/rclone:1.75.2` as a build stage so Dependabot sees it, `@bitwarden/cli@2026.10.0`). Dependabot opens weekly Docker PRs; the CLI pin is a manual bump because there is no `package.json`.
 - `README.md` and `DOCKERHUB.md` share their intro, features, env table, "What a run does", image tags and security sections — change both, and keep the shared sections identical.
 - Commits and documentation are English. `AGENTS.md` holds the rules for automated contributors.

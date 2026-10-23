@@ -23,8 +23,10 @@ Images are published to Docker Hub (`benjaminaicheler/vaultwarden-export-rclone`
 
 | Tag | Meaning |
 |-----|---------|
-| `latest` | Last release. Only moved by a `v*` tag, so it never jumps between releases by itself. |
+| `latest` | Last release, same image as the highest `v<X.Y.Z>`. Only moved by a `v*` tag, so it never jumps between releases by itself. |
 | `dev` | Current `main` on every push. Built and smoke-tested, but not a release. |
+| `v<X.Y.Z>` | One release, e.g. `v2.7.0`. Created from a `v*` git tag. |
+| `v<X.Y>` | The release line, moved on every patch release of that line. |
 | `sha-<short>` | One specific commit, for pinning a deployment. |
 
 Use `latest` for scheduled backups and pin `sha-…` if you need the exact build to be reproducible.
