@@ -49,6 +49,12 @@ jobs:
             sh -n /usr/local/bin/export-and-upload.sh && echo "script syntax ok"
           '
 
+      - name: Run the test harness inside the image
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$PWD:/src:ro" --entrypoint sh local/vaultwarden-export-rclone:test \
+            -c 'cd /src && sh tests/harness.sh'
+
       - name: Entrypoint refuses to run without configuration
         run: |
           set -uo pipefail

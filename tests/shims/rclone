@@ -1,0 +1,48 @@
+#!/bin/sh
+# rclone stand-in for tests/harness.sh.
+#
+# Without a switch it delegates to the real rclone further down PATH, so the
+# retention tests exercise rclone's own --min-age/--filter semantics. If no real
+# rclone is installed it falls back to a local `cp`/no-op.
+#
+# Switches:
+#   FAIL_COPY=1    `rclone copy` fails (no file lands in the destination)
+#   FAIL_DELETE=1  `rclone delete` fails (a remote without delete support)
+LOG="${LOG:-/dev/null}"
+echo "rclone $*" >> "$LOG"
+
+if [ "$1" = "delete" ] && [ -n "${FAIL_DELETE:-}" ]; then
+    echo "rclone: delete not supported on remote" >&2
+    exit 1
+fi
+if [ "$1" = "copy" ] && [ -n "${FAIL_COPY:-}" ]; then
+    echo "rclone: connection reset" >&2
+    exit 1
+fi
+
+shim_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+real=""
+old_ifs=$IFS; IFS=:
+for dir in $PATH; do
+    case "$dir" in ""|"$shim_dir") continue ;; esac
+    bin="$dir/rclone"
+    [ -f "$bin" ] && [ -x "$bin" ] || continue
+    # skip other scripts (another shim) to avoid delegating in a circle
+    [ "$(head -c 2 "$bin" 2>/dev/null)" = "#!" ] && continue
+    real="$bin"; break
+done
+IFS=$old_ifs
+
+if [ -n "$real" ]; then
+    exec "$real" "$@"
+fi
+
+# Fallback without rclone: copy into the destination, ignore deletion.
+if [ "$1" = "copy" ]; then
+    src=$2; dst=$3
+    case "$dst" in
+      /*) mkdir -p "$dst" || exit 1; cp "$src" "$dst"/ || exit 1 ;;
+      *)  echo "rclone shim: cannot emulate remote '$dst' without rclone" >&2; exit 1 ;;
+    esac
+fi
+exit 0

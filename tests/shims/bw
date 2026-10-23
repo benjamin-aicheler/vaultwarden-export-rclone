@@ -1,0 +1,42 @@
+#!/bin/sh
+# Stand-in for the Bitwarden CLI used by tests/harness.sh.
+# Behaviour switches (all optional):
+#   FAIL_LOGIN=1      `bw login --apikey` fails
+#   FAIL_UNLOCK=1     `bw unlock` fails
+#   FAIL_EXPORT=1     `bw export` exits non-zero
+#   NO_EXPORT_FILE=1  `bw export` exits 0 but writes nothing
+#   EXPORT_MODE=truncated|noitems|empty
+LOG="${LOG:-/dev/null}"
+echo "bw $*" >> "$LOG"
+
+case "$1" in
+  config)
+    exit 0 ;;
+  login)
+    if [ -n "${FAIL_LOGIN:-}" ]; then echo "Invalid API key" >&2; exit 1; fi
+    exit 0 ;;
+  unlock)
+    if [ -n "${FAIL_UNLOCK:-}" ]; then echo "Vault: invalid master password" >&2; exit 1; fi
+    echo "SESSIONKEY123"
+    exit 0 ;;
+  export)
+    out=""; prev=""
+    for a in "$@"; do
+      if [ "$prev" = "--output" ]; then out="$a"; fi
+      prev="$a"
+    done
+    if [ -n "${FAIL_EXPORT:-}" ]; then echo "Export failed: network" >&2; exit 1; fi
+    if [ -n "${NO_EXPORT_FILE:-}" ]; then exit 0; fi
+    case "${EXPORT_MODE:-valid}" in
+      truncated) printf '{"items": [' > "$out" ;;
+      noitems)   printf '{"foo":1}' > "$out" ;;
+      empty)     printf '{"items": []}' > "$out" ;;
+      *)         printf '{"items":[{"name":"demo"}]}' > "$out" ;;
+    esac
+    echo "export written to $out"
+    exit 0 ;;
+  logout)
+    echo "logged out"
+    exit 0 ;;
+esac
+exit 0

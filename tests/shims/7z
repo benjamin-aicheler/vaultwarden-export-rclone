@@ -1,0 +1,28 @@
+#!/bin/sh
+# Stand-in for 7-Zip used by tests/harness.sh.
+#   FAIL_7Z=1       creating the archive fails
+#   FAIL_7Z_TEST=1  verifying the archive (`7z t`) fails
+LOG="${LOG:-/dev/null}"
+echo "7z $*" >> "$LOG"
+
+case "$1" in
+  t)
+    if [ -n "${FAIL_7Z_TEST:-}" ]; then echo "ERROR: CRC Failed" >&2; exit 2; fi
+    echo "Everything is Ok"
+    exit 0 ;;
+esac
+
+if [ -n "${FAIL_7Z:-}" ]; then echo "ERROR: E_FAIL" >&2; exit 2; fi
+
+# `7z a [switches] <archive> <files...>`: the archive is the first non-switch
+seen_a=0; archive=""
+for a in "$@"; do
+  case "$a" in
+    a) seen_a=1; continue ;;
+  esac
+  if [ "$seen_a" = "1" ] && [ -z "$archive" ]; then
+    case "$a" in -*) ;; *) archive="$a" ;; esac
+  fi
+done
+printf '7z-archive-bytes' > "$archive"
+exit 0
