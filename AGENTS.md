@@ -19,7 +19,7 @@ backup container: one POSIX `sh` script, one `Dockerfile`, one workflow, two mir
 | `export-and-upload.sh` | The entire job: validate config, `bw` login/unlock/export, optional `.7z`, `rclone` upload, retention. |
 | `Dockerfile` | Pinned base images, non-root user `app` (uid/gid `10001`, `HOME=/home/app`). |
 | `tests/harness.sh`, `tests/shims/` | The smoke-test suite and its `bw`/`7z`/`rclone` stand-ins. |
-| `.github/workflows/build.yml` | PR build + smoke test + harness; publish on `main` (`:dev`) and `v*` (version, `latest`). |
+| `.github/workflows/build.yml` | PR build + smoke test + harness; publish on `main` (`:dev`) and `v*` (`vX.Y.Z`, `vX.Y`, `latest`). |
 | `README.md`, `DOCKERHUB.md` | Mirrored documentation — see *Documentation* below. |
 
 ## Behaviour contract
