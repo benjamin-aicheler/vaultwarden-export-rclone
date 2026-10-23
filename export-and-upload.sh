@@ -73,6 +73,30 @@ if [ ! -f "$JSON_FILENAME" ]; then
     exit 1
 fi
 
+# Validate the export before anything leaves the container. A truncated or
+# malformed file must never be uploaded and rotate out a working backup.
+# A vault that is legitimately empty only produces a warning.
+if ! node -e '
+const fs = require("fs");
+let data;
+try {
+    data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+} catch (err) {
+    console.error("Error: export is not valid JSON (" + err.message.split("\n")[0] + ")");
+    process.exit(1);
+}
+if (!Array.isArray(data.items)) {
+    console.error("Error: export has no items array - unexpected format");
+    process.exit(1);
+}
+if (data.items.length === 0) {
+    console.error("Warning: export contains 0 items.");
+}
+' "$JSON_FILENAME"; then
+    echo "Error: Export validation failed, refusing to upload."
+    exit 1
+fi
+
 # Optional Encryption
 if [ -n "$ARCHIVE_PASSWORD" ]; then
     echo "ARCHIVE_PASSWORD is set. Encrypting JSON to $ARCHIVE_FILENAME..."
@@ -82,6 +106,12 @@ if [ -n "$ARCHIVE_PASSWORD" ]; then
     
     if [ ! -f "$ARCHIVE_FILENAME" ]; then
         echo "Error: Encryption failed, 7z archive not created."
+        exit 1
+    fi
+
+    # Verify the archive is readable with the password before uploading it
+    if ! 7z t -p"$ARCHIVE_PASSWORD" "$ARCHIVE_FILENAME" >/dev/null 2>&1; then
+        echo "Error: Archive verification failed, refusing to upload."
         exit 1
     fi
     
