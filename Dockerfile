@@ -17,4 +17,11 @@ RUN apk add --no-cache 7zip && \
 COPY export-and-upload.sh /usr/local/bin/export-and-upload.sh
 RUN chmod +x /usr/local/bin/export-and-upload.sh
 
+# Run unprivileged. The Bitwarden CLI keeps its session under $HOME/.config, so
+# the user needs its own writable home; the fixed uid makes bind mounts predictable.
+RUN addgroup -g 10001 app && \
+    adduser -S -u 10001 -G app -h /home/app app
+ENV HOME=/home/app
+USER app
+
 ENTRYPOINT ["/usr/local/bin/export-and-upload.sh"]
