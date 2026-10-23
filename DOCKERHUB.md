@@ -371,17 +371,9 @@ See Compose Example for including self-signed Certificates.
 - The container runs as the unprivileged user `app` (uid/gid `10001`, `HOME=/home/app`). The Bitwarden CLI needs that home for its configuration; if you bind-mount a directory instead of using an rclone backend, it must be writable for uid `10001`.
 - Consider utilizing a dedicated read-only/backup account in Vaultwarden if practical.
 
-## AI Usage Disclosure
+## AI Disclosure
 
-This project is written with AI assistance, and it says so. The version up to commit `dce21ea` (November 2025 until 12 October 2026) is the maintainer's own work. Everything merged after it, from pull request #1 onwards — the rewritten `export-and-upload.sh`, the `Dockerfile`, the CI workflow, the test harness and both documents — was produced in pair-programming sessions with a large-language-model agent and then reviewed, tested and merged by the maintainer. The pull requests in the history are the record of that: each names the change, the verification that was actually executed, and what could not be verified.
-
-What that does and does not mean:
-
-- Nothing is published unattended. Every change goes through a pull request, is built by CI, and is run by `tests/harness.sh` inside the built image before it is merged.
-- The statements in this README are backed by executed commands, not by plausible-sounding text: retention behaviour was tested against a real `rclone`, archive verification against a real 7-Zip, the CLI flags against real Bitwarden CLI releases.
-- The container does not call any AI service at runtime. No telemetry, no "smart" feature, no network destination besides your Vaultwarden server, the rclone destination you configure and the registry you pull from.
-- AI assistance is not a warranty. The Apache-2.0 disclaimer applies unchanged, and bugs are possible in reviewed code too.
-- If something reads like it was generated and is wrong — a misleading sentence, an unverified claim, a comment that no longer matches the code — treat it as a bug and open an issue.
+This project was refactored and documented in partnership with **Ikaros**, an agentic coding assistant running on Hermes Agent by Nous Research. All architectural choices, code styles and features (such as the retention filter chain, the export validation and the non-root image) were developed with AI pair programming and reviewed before every merge.
 
 ### Third-Party Licenses
 
