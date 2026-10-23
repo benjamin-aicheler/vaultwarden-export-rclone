@@ -1,0 +1,117 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_DOCKERHUB: benjaminaicheler/vaultwarden-export-rclone
+  IMAGE_GHCR: ghcr.io/${{ github.repository }}
+
+jobs:
+  smoke:
+    name: smoke test (amd64)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image (load locally)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: local/vaultwarden-export-rclone:test
+          cache-from: type=gha,scope=smoke
+          cache-to: type=gha,mode=max,scope=smoke
+
+      - name: Image contains the expected tooling
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint sh local/vaultwarden-export-rclone:test -c '
+            set -e
+            bw --version
+            rclone version | head -n 1
+            7z i >/dev/null && echo "7z ok"
+            sh -n /usr/local/bin/export-and-upload.sh && echo "script syntax ok"
+          '
+
+      - name: Entrypoint refuses to run without configuration
+        run: |
+          set -uo pipefail
+          # the run exits 1 on purpose, so the capture must not trip `set -e`
+          rc=0
+          out=$(docker run --rm local/vaultwarden-export-rclone:test 2>&1) || rc=$?
+          echo "$out"
+          if [ "$rc" -ne 1 ]; then
+            echo "expected exit code 1 without configuration, got $rc"
+            exit 1
+          fi
+          echo "$out" | grep -q "not set" || { echo "expected a 'not set' message"; exit 1; }
+
+  publish:
+    name: build and push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.IMAGE_DOCKERHUB }}
+            ${{ env.IMAGE_GHCR }}
+          tags: |
+            type=raw,value=dev,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha,format=short,prefix=sha-
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # pull requests are built for amd64 only and never pushed
+          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=publish
+          cache-to: type=gha,mode=max,scope=publish
