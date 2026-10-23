@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+# The files created here contain the vault in plaintext (until archived): keep
+# them readable for root only instead of relying on the container being empty.
+umask 077
+
 # Configuration
 CLEANUP_MIN_AGE=${CLEANUP_MIN_AGE:-"30d"}
 
@@ -115,7 +119,9 @@ if [ -n "$ARCHIVE_PASSWORD" ]; then
         exit 1
     fi
     
-    # Securely delete the unencrypted JSON now that it's archived
+    # Drop the plaintext copy now that it is archived. This is not a secure erase:
+    # it removes the file from the live filesystem, the blocks may survive below
+    # it (overlayfs/copy-on-write) and in an image commit of this container.
     rm -f "$JSON_FILENAME"
 fi
 
