@@ -29,6 +29,8 @@ Images are published to Docker Hub (`benjaminaicheler/vaultwarden-export-rclone`
 | `v<X.Y>` | The release line, moved on every patch release of that line. |
 | `sha-<short>` | One specific commit, for pinning a deployment. |
 
+Every `v*` tag is published verbatim as well. A release tagged without a patch level (`v2.7`) therefore gets exactly the image tag `v2.7`; the `v<X.Y.Z>` and `v<X.Y>` pair above requires a three-part tag such as `v2.7.0`, because only that is valid semantic versioning.
+
 Use `latest` for scheduled backups and pin `sha-…` if you need the exact build to be reproducible.
 
 ## Environment Variables
