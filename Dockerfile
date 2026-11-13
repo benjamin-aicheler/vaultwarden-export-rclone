@@ -1,6 +1,6 @@
 # Pinned base images: the rclone stage exists so the image reference is a real
 # FROM line (Dependabot tracks those reliably, not `COPY --from=image:tag`).
-FROM rclone/rclone:1.75.2 AS rclone
+FROM rclone/rclone:1.76.0 AS rclone
 
 FROM node:26.12-alpine
 
