@@ -2,7 +2,7 @@
 # FROM line (Dependabot tracks those reliably, not `COPY --from=image:tag`).
 FROM rclone/rclone:1.76.0 AS rclone
 
-FROM node:26.12-alpine
+FROM node:26.13-alpine
 
 # Copy the pre-compiled rclone binary and the CA bundle from the rclone image
 COPY --from=rclone /usr/local/bin/rclone /usr/local/bin/rclone
